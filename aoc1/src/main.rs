@@ -1,31 +1,17 @@
-#[derive(Debug, Copy, Clone)]
-struct Module {
-    pub mass: u64,
-}
-
-fn mass_to_fuel(mass: u64) -> u64 {
-    (mass / 3).saturating_sub(2)
-}
-
-impl Module {
-    pub fn launch_fuel(self) -> u64 {
-        mass_to_fuel(self.mass)
-    }
-
-    pub fn total_fuel(self) -> u64 {
-        std::iter::successors(Some(self.launch_fuel()), |&fuel| Some(mass_to_fuel(fuel)))
-            .take_while(|&fuel| fuel != 0)
-            .sum::<u64>()
-    }
+fn calculate_fuel(mass: u64) -> u64 {
+    let calc_fuel = |mass: u64| Some((mass / 3).saturating_sub(2));
+    std::iter::successors(calc_fuel(mass), |&fuel| calc_fuel(fuel))
+        .take_while(|&fuel| fuel != 0)
+        .sum::<u64>()
 }
 
 fn main() {
     println!(
         "{}",
-        include_str!("../input")
+        include_str!("../input.txt")
             .lines()
             .filter_map(|x| x.parse().ok())
-            .map(|mass| Module { mass }.total_fuel())
+            .map(calculate_fuel)
             .sum::<u64>()
     );
 }
