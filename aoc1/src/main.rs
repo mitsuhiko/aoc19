@@ -13,12 +13,11 @@ impl Module {
     }
 
     pub fn total_fuel(self) -> u64 {
-        std::iter::successors(Some(self.launch_fuel()), |&fuel| {
-            match mass_to_fuel(fuel) {
-                0 => None,
-                extra => Some(extra)
-            }
-        }).sum::<u64>()
+        std::iter::successors(Some(self.launch_fuel()), |&fuel| match mass_to_fuel(fuel) {
+            0 => None,
+            extra => Some(extra),
+        })
+        .sum::<u64>()
     }
 }
 
