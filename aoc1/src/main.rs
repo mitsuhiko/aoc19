@@ -5,7 +5,7 @@ fn mass_to_fuel(mass: u64) -> u64 {
 fn total_fuel(mass: u64) -> u64 {
     std::iter::successors(Some(mass_to_fuel(mass)), |&x| Some(mass_to_fuel(x)))
         .take_while(|&x| x != 0)
-        .sum::<u64>()
+        .sum()
 }
 
 fn main() {
