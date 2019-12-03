@@ -1,95 +1,67 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
-trait DistanceMethod {
-    type WireDistanceType: Default;
-    fn store_wire_distance(_state: &mut Self::WireDistanceType, _distance: i32) {}
-    fn calculate_distance(
-        x: i32,
-        y: i32,
-        distances: &mut dyn Iterator<Item = &Self::WireDistanceType>,
-    ) -> i32;
-}
-
-struct ManhattanMethod;
-
-impl DistanceMethod for ManhattanMethod {
-    type WireDistanceType = ();
-
-    fn calculate_distance(
-        x: i32,
-        y: i32,
-        _state: &mut dyn Iterator<Item = &Self::WireDistanceType>,
-    ) -> i32 {
-        x.abs() + y.abs()
-    }
-}
-
-struct WireLengthMethod;
-
-impl DistanceMethod for WireLengthMethod {
-    type WireDistanceType = i32;
-
-    fn store_wire_distance(distances: &mut Self::WireDistanceType, distance: i32) {
-        *distances = distance;
-    }
-
-    fn calculate_distance(
-        _x: i32,
-        _y: i32,
-        distances: &mut dyn Iterator<Item = &Self::WireDistanceType>,
-    ) -> i32 {
-        distances.sum()
-    }
-}
-
-fn find_best_intersection<M: DistanceMethod>(input: &str) -> Option<i32> {
-    let mut grid: BTreeMap<(i32, i32), BTreeMap<u8, M::WireDistanceType>> = Default::default();
-    let mut wire_count = 0;
-
-    for (wire, line) in input.lines().enumerate() {
-        let mut x = 0i32;
-        let mut y = 0i32;
-        let mut distance = 0;
-        for item in line.split(',') {
-            let (step_x, step_y) = match item.chars().next()? {
+fn walk_wires<'a>(
+    input: &'a str,
+) -> impl Iterator<Item = impl Iterator<Item = (i32, i32)> + 'a> + 'a {
+    input.lines().take(2).map(|wire| {
+        wire.split(',').flat_map(|item| {
+            std::iter::repeat(match item.chars().next().unwrap() {
                 'L' => (-1, 0),
                 'R' => (1, 0),
                 'D' => (0, -1),
                 'U' => (0, 1),
                 _ => panic!("bad input"),
-            };
+            })
+            .take(item[1..].parse().unwrap())
+        })
+    })
+}
 
-            for _ in 0..item.get(1..)?.parse::<i32>().ok()? {
-                x += step_x;
-                y += step_y;
-                distance += step_x.abs() + step_y.abs();
-                M::store_wire_distance(
-                    grid.entry((x, y))
-                        .or_default()
-                        .entry(wire as u8)
-                        .or_default(),
-                    distance,
-                );
+fn find_manhattan_intersection(input: &str) -> Option<i32> {
+    let mut grid: BTreeMap<_, u8> = Default::default();
+
+    for wire in walk_wires(input) {
+        let mut x = 0;
+        let mut y = 0;
+        let mut seen = BTreeSet::new();
+        for (step_x, step_y) in wire {
+            x += step_x;
+            y += step_y;
+            if seen.insert((x, y)) {
+                *grid.entry((x, y)).or_default() += 1;
             }
         }
-        wire_count = wire + 1;
     }
 
     grid.into_iter()
-        .filter(|(_, matches)| matches.len() == wire_count)
-        .map(|((x, y), wires)| M::calculate_distance(x, y, &mut wires.values()))
+        .filter(|(_, wires)| *wires == 2)
+        .map(|((x, y), _)| x.abs() + y.abs())
+        .min()
+}
+
+fn find_closest_intersection(input: &str) -> Option<i32> {
+    let mut grid: BTreeMap<_, BTreeMap<_, _>> = Default::default();
+
+    for (idx, wire) in walk_wires(input).enumerate() {
+        let mut x = 0;
+        let mut y = 0;
+        let mut dist = 0;
+        for (step_x, step_y) in wire {
+            x += step_x;
+            y += step_y;
+            dist += step_x.abs() + step_y.abs();
+            *grid.entry((x, y)).or_default().entry(idx == 0).or_default() += dist;
+        }
+    }
+
+    grid.into_iter()
+        .filter(|(_, wires)| wires.len() == 2)
+        .map(|(_, wires)| wires.values().sum())
         .min()
 }
 
 fn main() {
     let input = include_str!("../input.txt");
-
-    println!(
-        "part 1: {}",
-        find_best_intersection::<ManhattanMethod>(input).unwrap()
-    );
-    println!(
-        "part 2: {}",
-        find_best_intersection::<WireLengthMethod>(input).unwrap()
-    );
+    println!("part 1: {}", find_manhattan_intersection(input).unwrap());
+    println!("part 2: {}", find_closest_intersection(input).unwrap());
 }
