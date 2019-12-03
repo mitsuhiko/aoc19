@@ -6,11 +6,11 @@ fn run_intcode(instructions: &[i64], a: i64, b: i64) -> Vec<i64> {
     let mut ip = 0;
     loop {
         match memory[ip] {
-            1 | 2 => {
+            op @ 1 ..= 2 => {
                 let a = memory[memory[ip + 1] as usize];
                 let b = memory[memory[ip + 2] as usize];
                 let out = memory[ip + 3] as usize;
-                memory[out] = if memory[ip] == 1 { a + b } else { a * b };
+                memory[out] = if op == 1 { a + b } else { a * b };
                 ip += 4;
             }
             99 => { break; }
