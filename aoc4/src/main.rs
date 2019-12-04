@@ -14,6 +14,7 @@ fn reverse_digit_iterator(mut num: u32) -> impl Iterator<Item = u8> {
 fn check_part1(num: u32) -> bool {
     let mut last_digit = !0;
     let mut found_duplicate = false;
+
     for digit in reverse_digit_iterator(num) {
         if digit > last_digit {
             return false;
@@ -22,6 +23,7 @@ fn check_part1(num: u32) -> bool {
         }
         last_digit = digit;
     }
+
     found_duplicate
 }
 
