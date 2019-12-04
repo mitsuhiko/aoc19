@@ -3,14 +3,4 @@
 [[package]]
 name = "aoc4"
 version = "0.1.0"
-dependencies = [
- "smallvec 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
-[[package]]
-name = "smallvec"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[metadata]
-"checksum smallvec 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4ecf3b85f68e8abaa7555aa5abdb1153079387e60b718283d732f03897fcfc86"
