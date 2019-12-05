@@ -107,7 +107,7 @@ fn main() {
 fn test_eval() {
     assert_eq!(
         eval(include_str!("../input.txt"), 1).last(),
-        Some(&13346482)
+        Some(&13_346_482)
     );
     assert_eq!(eval("3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9", 0), vec![0]);
     assert_eq!(
