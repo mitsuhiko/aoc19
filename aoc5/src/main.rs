@@ -9,7 +9,7 @@ impl Interpreter {
             .filter_map(|x| x.parse().ok())
             .collect();
         Interpreter {
-            memory: dbg!(instructions),
+            memory: instructions,
         }
     }
 
@@ -35,20 +35,15 @@ impl Interpreter {
         loop {
             match self.memory[ip] % 100 {
                 1 => {
-                    let a = self.get_arg(ip, 1);
-                    let b = self.get_arg(ip, 2);
-                    self.put(ip, 3, a + b);
+                    self.put(ip, 3, self.get_arg(ip, 1) + self.get_arg(ip, 2));
                     ip += 4;
                 }
                 2 => {
-                    let a = self.get_arg(ip, 1);
-                    let b = self.get_arg(ip, 2);
-                    self.put(ip, 3, a * b);
+                    self.put(ip, 3, self.get_arg(ip, 1) * self.get_arg(ip, 2));
                     ip += 4;
                 }
                 3 => {
-                    let val = input;
-                    self.put(ip, 1, val);
+                    self.put(ip, 1, input);
                     ip += 2;
                 }
                 4 => {
@@ -98,12 +93,54 @@ impl Interpreter {
     }
 }
 
+fn eval(code: &str, input: i64) -> Vec<i64> {
+    Interpreter::new(code).run(input)
+}
+
 fn main() {
     let input = include_str!("../input.txt");
+    println!("part 1: {:?}", eval(input, 1));
+    println!("part 2: {:?}", eval(input, 5));
+}
 
-    let mut interpreter = Interpreter::new(input);
-    println!("part 1: {:?}", interpreter.run(1));
-
-    let mut interpreter = Interpreter::new(input);
-    println!("part 2: {:?}", interpreter.run(5));
+#[test]
+fn test_eval() {
+    assert_eq!(
+        eval(include_str!("../input.txt"), 1).last(),
+        Some(&13346482)
+    );
+    assert_eq!(eval("3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9", 0), vec![0]);
+    assert_eq!(
+        eval("3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9", 42),
+        vec![1]
+    );
+    assert_eq!(eval("3,3,1105,-1,9,1101,0,0,12,4,12,99,1", 0), vec![0]);
+    assert_eq!(eval("3,3,1105,-1,9,1101,0,0,12,4,12,99,1", 42), vec![1]);
+    assert_eq!(
+        eval(
+            "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,\
+             1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,\
+             999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99",
+            7
+        ),
+        vec![999]
+    );
+    assert_eq!(
+        eval(
+            "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,\
+             1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,\
+             999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99",
+            8
+        ),
+        vec![1000]
+    );
+    assert_eq!(
+        eval(
+            "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,\
+             1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,\
+             999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99",
+            9
+        ),
+        vec![1001]
+    );
 }
