@@ -5,8 +5,9 @@ struct Interpreter {
 impl Interpreter {
     fn new(instructions: &str) -> Interpreter {
         let instructions: Vec<i64> = instructions
+            .trim()
             .split(',')
-            .filter_map(|x| x.parse().ok())
+            .map(|x| x.parse().unwrap())
             .collect();
         Interpreter {
             memory: instructions,
