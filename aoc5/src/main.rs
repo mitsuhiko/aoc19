@@ -1,101 +1,90 @@
-struct Interpreter {
-    memory: Vec<i64>,
-}
+fn eval(code: &str, input: i64) -> Vec<i64> {
+    let mut mem: Vec<i64> = code
+        .trim()
+        .split(',')
+        .map(|op| op.parse().unwrap())
+        .collect();
 
-impl Interpreter {
-    fn new(instructions: &str) -> Interpreter {
-        let instructions: Vec<i64> = instructions
-            .trim()
-            .split(',')
-            .map(|x| x.parse().unwrap())
-            .collect();
-        Interpreter {
-            memory: instructions,
-        }
-    }
-
-    fn get_arg(&self, ip: usize, off: usize) -> i64 {
-        let arg_modes = self.memory[ip] / 100;
-        let val = self.memory[ip + off];
+    fn arg(mem: &[i64], ip: usize, off: usize) -> i64 {
+        let arg_modes = mem[ip] / 100;
+        let val = mem[ip + off];
         match arg_modes / 10i64.pow((off - 1) as u32) % 10 {
-            0 => self.memory[val as usize],
+            0 => mem[val as usize],
             1 => val,
             _ => panic!("wat"),
         }
     }
 
-    fn put(&mut self, ip: usize, off: usize, val: i64) {
-        let out = self.memory[ip + off] as usize;
-        self.memory[out] = val;
+    fn put(mem: &mut [i64], ip: usize, off: usize, val: i64) {
+        let out = mem[ip + off] as usize;
+        mem[out] = val;
     }
 
-    fn run(&mut self, input: i64) -> Vec<i64> {
-        let mut out = vec![];
-        let mut ip = 0;
+    let mut out = vec![];
+    let mut ip = 0;
 
-        loop {
-            match self.memory[ip] % 100 {
-                1 => {
-                    self.put(ip, 3, self.get_arg(ip, 1) + self.get_arg(ip, 2));
-                    ip += 4;
-                }
-                2 => {
-                    self.put(ip, 3, self.get_arg(ip, 1) * self.get_arg(ip, 2));
-                    ip += 4;
-                }
-                3 => {
-                    self.put(ip, 1, input);
-                    ip += 2;
-                }
-                4 => {
-                    out.push(self.get_arg(ip, 1));
-                    ip += 2;
-                }
-                5 => {
-                    if self.get_arg(ip, 1) != 0 {
-                        ip = self.get_arg(ip, 2) as usize;
-                    } else {
-                        ip += 3;
-                    }
-                }
-                6 => {
-                    if self.get_arg(ip, 1) == 0 {
-                        ip = self.get_arg(ip, 2) as usize;
-                    } else {
-                        ip += 3;
-                    }
-                }
-                7 => {
-                    if self.get_arg(ip, 1) < self.get_arg(ip, 2) {
-                        self.put(ip, 3, 1);
-                    } else {
-                        self.put(ip, 3, 0);
-                    }
-                    ip += 4;
-                }
-                8 => {
-                    if self.get_arg(ip, 1) == self.get_arg(ip, 2) {
-                        self.put(ip, 3, 1);
-                    } else {
-                        self.put(ip, 3, 0);
-                    }
-                    ip += 4;
-                }
-                99 => {
-                    break;
-                }
-                _ => {
-                    panic!("this should not happen");
+    loop {
+        match mem[ip] % 100 {
+            1 => {
+                let a = arg(&mem, ip, 1);
+                let b = arg(&mem, ip, 2);
+                put(&mut mem, ip, 3, a + b);
+                ip += 4;
+            }
+            2 => {
+                let a = arg(&mem, ip, 1);
+                let b = arg(&mem, ip, 2);
+                put(&mut mem, ip, 3, a * b);
+                ip += 4;
+            }
+            3 => {
+                put(&mut mem, ip, 1, input);
+                ip += 2;
+            }
+            4 => {
+                out.push(arg(&mem, ip, 1));
+                ip += 2;
+            }
+            5 => {
+                if arg(&mem, ip, 1) != 0 {
+                    ip = arg(&mem, ip, 2) as usize;
+                } else {
+                    ip += 3;
                 }
             }
+            6 => {
+                if arg(&mem, ip, 1) == 0 {
+                    ip = arg(&mem, ip, 2) as usize;
+                } else {
+                    ip += 3;
+                }
+            }
+            7 => {
+                if arg(&mem, ip, 1) < arg(&mem, ip, 2) {
+                    put(&mut mem, ip, 3, 1);
+                } else {
+                    put(&mut mem, ip, 3, 0);
+                }
+                ip += 4;
+            }
+            8 => {
+                if arg(&mem, ip, 1) == arg(&mem, ip, 2) {
+                    put(&mut mem, ip, 3, 1);
+                } else {
+                    put(&mut mem, ip, 3, 0);
+                }
+                ip += 4;
+            }
+            99 => {
+                break;
+            }
+            _ => {
+                panic!("this should not happen");
+            }
         }
-
-        out
     }
-}
 
-fn eval(code: &str, input: i64) -> Vec<i64> {
-    Interpreter::new(code).run(input)
+    out
 }
 
 fn main() {
