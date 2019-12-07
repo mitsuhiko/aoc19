@@ -114,12 +114,8 @@ impl Machine {
     }
 }
 
-fn try_permutations<F: FnMut(Vec<i64>) -> i64>(mut func: F) -> i64 {
-    (0..5)
-        .permutations(5)
-        .map(|permutations| func(permutations))
-        .max()
-        .unwrap()
+fn try_permutations<F: FnMut(Vec<i64>) -> i64>(func: F) -> i64 {
+    (0..5).permutations(5).map(func).max().unwrap()
 }
 
 fn find_max_amplification(code: &[i64]) -> i64 {
