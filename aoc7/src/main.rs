@@ -150,5 +150,5 @@ fn find_max_amplification_feedback(code: &[i64]) -> i64 {
 fn main() {
     let instructions = load_program(include_str!("../input.txt"));
     println!("part 1: {}", find_max_amplification(&instructions));
-    println!("part 1: {}", find_max_amplification_feedback(&instructions));
+    println!("part 2: {}", find_max_amplification_feedback(&instructions));
 }
