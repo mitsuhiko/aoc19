@@ -17,19 +17,12 @@ struct Machine {
 }
 
 impl Machine {
-    fn arg(&self, off: usize) -> i64 {
-        let arg_modes = self.mem[self.ip] / 100;
-        let val = self.mem[self.ip + off];
-        match arg_modes / 10i64.pow((off - 1) as u32) % 10 {
-            0 => self.mem[val as usize],
-            1 => val,
-            _ => panic!("wat"),
+    pub fn new(mem: &[i64], inputs: Vec<i64>) -> Machine {
+        Machine {
+            mem: mem.to_vec(),
+            inputs,
+            ..Default::default()
         }
-    }
-
-    fn put(&mut self, off: usize, val: i64) {
-        let out = self.mem[self.ip + off] as usize;
-        self.mem[out] = val;
     }
 
     pub fn eval(&mut self) -> i64 {
@@ -104,49 +97,54 @@ impl Machine {
             }
         }
     }
+
+    fn arg(&self, off: usize) -> i64 {
+        let arg_modes = self.mem[self.ip] / 100;
+        let val = self.mem[self.ip + off];
+        match arg_modes / 10i64.pow((off - 1) as u32) % 10 {
+            0 => self.mem[val as usize],
+            1 => val,
+            _ => panic!("wat"),
+        }
+    }
+
+    fn put(&mut self, off: usize, val: i64) {
+        let out = self.mem[self.ip + off] as usize;
+        self.mem[out] = val;
+    }
+}
+
+fn try_permutations<F: FnMut(Vec<i64>) -> i64>(mut func: F) -> i64 {
+    (0..5)
+        .permutations(5)
+        .map(|permutations| func(permutations))
+        .max()
+        .unwrap()
 }
 
 fn find_max_amplification(code: &[i64]) -> i64 {
-    (0..5)
-        .permutations(5)
-        .map(|x| {
-            x.into_iter().fold(0, |i, s| {
-                Machine {
-                    mem: code.to_vec(),
-                    inputs: vec![s, i],
-                    ..Default::default()
-                }
-                .eval()
-            })
-        })
-        .max()
-        .unwrap()
+    try_permutations(|x| {
+        x.into_iter()
+            .fold(0, |i, s| Machine::new(code, vec![s, i]).eval())
+    })
 }
 
 fn find_max_amplification_feedback(code: &[i64]) -> i64 {
-    (5..10)
-        .permutations(5)
-        .map(|x| {
-            let mut machines: Vec<_> = x
-                .into_iter()
-                .map(|x| Machine {
-                    mem: code.to_vec(),
-                    inputs: vec![x],
-                    ..Default::default()
-                })
-                .collect();
-            let mut input = 0;
-            while !machines[4].halted {
-                for machine in machines.iter_mut() {
-                    machine.inputs.push(input);
-                    machine.step();
-                    input = machine.output;
-                }
+    try_permutations(|x| {
+        let mut machines: Vec<_> = x
+            .into_iter()
+            .map(|x| Machine::new(code, vec![x + 5]))
+            .collect();
+        let mut input = 0;
+        while !machines[4].halted {
+            for machine in machines.iter_mut() {
+                machine.inputs.push(input);
+                machine.step();
+                input = machine.output;
             }
-            machines[4].output
-        })
-        .max()
-        .unwrap()
+        }
+        machines[4].output
+    })
 }
 
 fn main() {
