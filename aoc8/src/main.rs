@@ -27,7 +27,7 @@ impl Image {
         self.layers
             .iter()
             .map(|layer| {
-                layer.iter().fold((0, 0, 0), |(z, o, t), x| match *x {
+                layer.iter().fold((0, 0, 0), |(z, o, t), p| match *p {
                     0 => (z + 1, o, t),
                     1 => (z, o + 1, t),
                     2 => (z, o, t + 1),
@@ -38,31 +38,30 @@ impl Image {
             .map_or(0, |(_, o, t)| o * t)
     }
 
-    fn merge_layers(&self) -> Vec<u8> {
-        let mut rv = vec![2; self.width * self.height];
-        for layer in self.layers.iter().rev() {
-            for (idx, &pixel) in layer.iter().enumerate() {
-                if pixel != 2 {
-                    rv[idx] = pixel;
-                }
-            }
-        }
-        rv
-    }
-
     fn draw(&self) -> String {
-        let mut rv = String::new();
-        for (idx, pixel) in self.merge_layers().into_iter().enumerate() {
-            if idx > 0 && idx % self.width == 0 {
-                rv.push('\n');
-            }
-            rv.push(match pixel {
-                0 => ' ',
-                1 => '*',
-                _ => '.',
-            });
-        }
-        rv
+        self.layers
+            .iter()
+            .rev()
+            .fold(vec![0; self.width * self.height], |out, layer| {
+                layer
+                    .iter()
+                    .enumerate()
+                    .fold(out, |mut out, (idx, &pixel)| {
+                        if pixel != 2 {
+                            out[idx] = pixel;
+                        }
+                        out
+                    })
+            })
+            .into_iter()
+            .enumerate()
+            .fold(String::new(), |mut out, (idx, pixel)| {
+                if idx > 0 && idx % self.width == 0 {
+                    out.push('\n');
+                }
+                out.push(if pixel == 1 { '*' } else { ' ' });
+                out
+            })
     }
 }
 
