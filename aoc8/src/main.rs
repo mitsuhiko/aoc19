@@ -31,7 +31,7 @@ impl Image {
                     0 => (z + 1, o, t),
                     1 => (z, o + 1, t),
                     2 => (z, o, t + 1),
-                    _ => (z, o, t),
+                    _ => unreachable!(),
                 })
             })
             .min_by_key(|x| x.0)
@@ -51,23 +51,18 @@ impl Image {
     }
 
     fn draw(&self) -> String {
-        self.merge_layers()
-            .into_iter()
-            .enumerate()
-            .flat_map(|(idx, pixel)| {
-                if idx > 0 && idx % self.width == 0 {
-                    Some('\n')
-                } else {
-                    None
-                }
-                .into_iter()
-                .chain(Some(match pixel {
-                    0 => ' ',
-                    1 => '*',
-                    _ => '.',
-                }))
-            })
-            .collect()
+        let mut rv = String::new();
+        for (idx, pixel) in self.merge_layers().into_iter().enumerate() {
+            if idx > 0 && idx % self.width == 0 {
+                rv.push('\n');
+            }
+            rv.push(match pixel {
+                0 => ' ',
+                1 => '*',
+                _ => '.',
+            });
+        }
+        rv
     }
 }
 
