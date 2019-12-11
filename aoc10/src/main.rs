@@ -17,9 +17,9 @@ fn parse_asteroids(data: &str) -> Vec<Point> {
         .collect()
 }
 
-fn get_angle(p1: Point, p2: Point) -> i64 {
-    ((p2.0 as f64 - p1.0 as f64)
-        .atan2(p1.1 as f64 - p2.1 as f64)
+fn get_angle(a: Point, b: Point) -> i64 {
+    ((b.0 as f64 - a.0 as f64)
+        .atan2(a.1 as f64 - b.1 as f64)
         .rem_euclid(2.0 * PI)
         * PRECISION) as i64
 }
@@ -48,7 +48,7 @@ fn find_sweeping_hits(asteroids: &[Point]) -> Vec<(i64, i64)> {
         .copied()
         .filter(|&p| p != t)
         .collect::<Vec<_>>();
-    asteroids.sort_by_key(|(x, y)| (x - t.0) * (x - t.0) + (y - t.1) * (y - t.1));
+    asteroids.sort_by_key(|x| (x.0 - t.0).pow(2) + (x.1 - t.1).pow(2));
     let sort_keys = asteroids
         .iter()
         .enumerate()
