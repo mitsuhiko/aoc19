@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-use std::collections::BTreeMap;
 
 use interpreter::Machine;
 
@@ -11,8 +10,6 @@ pub enum Tile {
     Paddle,
     Ball,
 }
-
-type Tiles = BTreeMap<(u8, u8), Tile>;
 
 pub struct Game {
     machine: Machine,
@@ -29,7 +26,6 @@ impl Game {
 
     pub fn set_free_play(&mut self) {
         self.machine.mem_set(0, 2);
-        self.machine.feed(0);
     }
 
     fn step(&mut self) -> Option<i64> {
@@ -65,21 +61,24 @@ impl Game {
 
 fn find_starting_blocks() -> usize {
     let mut game = Game::new();
-    let mut tiles = Tiles::new();
-    while let Some((x, y, tile)) = game.input(0) {
-        tiles.insert((x, y), tile);
+    let mut count = 0;
+    while let Some((_, _, tile)) = game.input(0) {
+        if tile == Tile::Block {
+            count += 1;
+        }
     }
-    tiles.values().filter(|x| **x == Tile::Block).count()
+    count
 }
 
 fn play_perfect_game() -> usize {
     let mut game = Game::new();
     game.set_free_play();
-    let mut tiles = Tiles::new();
+
     let mut input = 0;
     let mut paddle_x = 0;
     let mut ball_x = 0;
-    while let Some((x, y, tile)) = game.input(input) {
+
+    while let Some((x, _, tile)) = game.input(input) {
         match tile {
             Tile::Paddle => paddle_x = x,
             Tile::Ball => ball_x = x,
@@ -91,8 +90,6 @@ fn play_perfect_game() -> usize {
             Ordering::Greater => 1,
             Ordering::Equal => 0,
         };
-
-        tiles.insert((x, y), tile);
     }
 
     game.score
