@@ -9,6 +9,7 @@ pub fn parse_ascii_program(code: &str) -> Vec<i64> {
 pub struct Machine {
     mem: Vec<i64>,
     inputs: Vec<i64>,
+    mem_input: i64,
     output: i64,
     relative_base: i64,
     ip: usize,
@@ -32,6 +33,11 @@ impl Machine {
     /// Feed some input into the machine.
     pub fn feed(&mut self, value: i64) {
         self.inputs.push(value);
+    }
+
+    /// Sets memory input.
+    pub fn set_mem_input(&mut self, value: i64) {
+        self.mem_input = value;
     }
 
     /// Returns an immutable view of the memory.
@@ -94,7 +100,11 @@ impl Machine {
                     self.ip += 4;
                 }
                 3 => {
-                    let input = self.inputs.remove(0);
+                    let input = if self.inputs.is_empty() {
+                        self.mem_input
+                    } else {
+                        self.inputs.remove(0)
+                    };
                     self.put(1, input);
                     self.ip += 2;
                 }
