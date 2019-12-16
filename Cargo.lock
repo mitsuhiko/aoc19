@@ -67,6 +67,9 @@ dependencies = [
 [[package]]
 name = "aoc9"
 version = "0.1.0"
+dependencies = [
+ "interpreter 0.1.0",
+]
 
 [[package]]
 name = "autocfg"
