@@ -1,4 +1,4 @@
-fn load_program(code: &str) -> Vec<i64> {
+pub fn parse_ascii_program(code: &str) -> Vec<i64> {
     code.trim()
         .split(',')
         .map(|op| op.parse().unwrap())
@@ -6,36 +6,78 @@ fn load_program(code: &str) -> Vec<i64> {
 }
 
 #[derive(Default)]
-struct Machine {
-    pub mem: Vec<i64>,
-    pub inputs: Vec<i64>,
-    pub output: i64,
-    pub relative_base: i64,
-    pub ip: usize,
-    pub halted: bool,
+pub struct Machine {
+    mem: Vec<i64>,
+    inputs: Vec<i64>,
+    output: i64,
+    relative_base: i64,
+    ip: usize,
+    halted: bool,
 }
 
 impl Machine {
-    pub fn new(mem: &[i64], inputs: Vec<i64>) -> Machine {
+    /// Creates the machine from the given memory instruction slice.
+    pub fn new(mem: &[i64]) -> Machine {
         Machine {
             mem: mem.to_vec(),
-            inputs,
             ..Default::default()
         }
     }
 
-    pub fn eval_all(&mut self) -> Vec<i64> {
-        let mut rv = vec![];
+    /// Loads a machine from ASCII code.
+    pub fn from_ascii_program(code: &str) -> Machine {
+        Machine::new(&parse_ascii_program(code))
+    }
+
+    /// Feed some input into the machine.
+    pub fn feed(&mut self, value: i64) {
+        self.inputs.push(value);
+    }
+
+    /// Returns an immutable view of the memory.
+    pub fn mem(&self) -> &[i64] {
+        &self.mem
+    }
+
+    /// Returns the last output produced
+    pub fn last_output(&self) -> i64 {
+        self.output
+    }
+
+    /// Returns the instruction pointer.
+    pub fn ip(&self) -> usize {
+        self.ip
+    }
+
+    /// Returns true if the machine halted.
+    pub fn halted(&self) -> bool {
+        self.halted
+    }
+
+    /// Runs until the machine stops returning the last output.
+    pub fn eval(&mut self) -> i64 {
+        while !self.halted() {
+            self.step();
+        }
+        self.last_output()
+    }
+
+    /// Runs until the machine stops returning a vector of outputs.
+    pub fn eval_multi(&mut self) -> Vec<i64> {
+        let mut rv = Vec::new();
         loop {
             self.step();
-            if self.halted {
+            if self.halted() {
                 break;
+            } else {
+                rv.push(self.last_output());
             }
-            rv.push(self.output);
         }
         rv
     }
 
+    /// Runs a single iteration until either output happens or the
+    /// machine halts without output.
     pub fn step(&mut self) {
         loop {
             match self.mem_get(self.ip) % 100 {
@@ -106,11 +148,11 @@ impl Machine {
         }
     }
 
-    fn mem_get(&self, addr: usize) -> i64 {
+    pub fn mem_get(&self, addr: usize) -> i64 {
         self.mem.get(addr).copied().unwrap_or(0)
     }
 
-    fn mem_set(&mut self, addr: usize, value: i64) {
+    pub fn mem_set(&mut self, addr: usize, value: i64) {
         self.mem.resize(self.mem.len().max(addr + 1), 0);
         self.mem[addr] = value;
     }
@@ -138,16 +180,4 @@ impl Machine {
         };
         self.mem_set(out, val);
     }
-}
-
-fn main() {
-    let instructions = load_program(include_str!("../input.txt"));
-    println!(
-        "part 1: {:?}",
-        Machine::new(&instructions, vec![1]).eval_all()
-    );
-    println!(
-        "part 2: {:?}",
-        Machine::new(&instructions, vec![2]).eval_all()
-    );
 }

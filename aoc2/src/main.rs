@@ -1,41 +1,22 @@
-fn run_intcode(instructions: &[i64], a: i64, b: i64) -> Vec<i64> {
-    let mut memory = instructions.to_owned();
-    memory[1] = a;
-    memory[2] = b;
-
-    let mut ip = 0;
-    loop {
-        match memory[ip] {
-            op @ 1 ..= 2 => {
-                let a = memory[memory[ip + 1] as usize];
-                let b = memory[memory[ip + 2] as usize];
-                let out = memory[ip + 3] as usize;
-                memory[out] = if op == 1 { a + b } else { a * b };
-                ip += 4;
-            }
-            99 => { break; }
-            _ => { panic!("this should not happen"); }
-        }
-    }
-
-    memory
-}
-
+use interpreter::{parse_ascii_program, Machine};
 
 fn main() {
-    let instructions: Vec<i64> = include_str!("../input.txt")
-        .split(',')
-        .filter_map(|x| x.parse().ok())
-        .collect();
+    let instructions = parse_ascii_program(include_str!("../input.txt"));
+    let mut machine = Machine::new(&instructions);
+    machine.mem_set(1, 12);
+    machine.mem_set(2, 2);
+    machine.eval();
 
-    let memory = run_intcode(&instructions, 12, 2);
-    println!("part 1: {}", memory[0]);
+    println!("part 1: {}", machine.mem_get(0));
 
     for a in 0..=99 {
         for b in 0..=99 {
-            let memory = run_intcode(&instructions, a, b);
-            if memory[0] == 19_690_720 {
-                println!("part 2: {}", 100 * memory[1] + memory[2]);
+            let mut machine = Machine::new(&instructions);
+            machine.mem_set(1, a);
+            machine.mem_set(2, b);
+            machine.eval();
+            if machine.mem_get(0) == 19_690_720 {
+                println!("part 2: {}", 100 * machine.mem_get(1) + machine.mem_get(2));
                 return;
             }
         }
